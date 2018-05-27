@@ -4,6 +4,7 @@ from skimage.morphology import erosion
 from skimage.morphology import disk
 from skimage import util
 from skimage import io
+import itertools
 
 
 class ExtendedMorphologicalProfiles:
@@ -121,6 +122,7 @@ pixels = sc.fit_transform(pixels)
 groundtruth = io.loadmat('indianpines_gt.mat')
 gt = np.transpose(groundtruth['pixels'])
 
+# Preprocessing
 # Applying Principal Components Analysis (PCA)
 from sklearn.decomposition import PCA
 number_of_pc = 4
@@ -139,12 +141,12 @@ for i in range(number_of_pc):
 
 plt.show()
 
-# building EMP
+# Building the Extended Morphological Profiles (EMP)
 pc_images.shape
 emp = ExtendedMorphologicalProfiles()
 emp_image = emp.build_emp(base_image=pc_images)
 
-# Visualizing EMP
+# Visualizing the EMP
 fig = plt.figure(figsize=(15, 15))
 columns = emp.get_morphological_profile_size()
 rows = emp.get_number_of_base_images()
@@ -155,5 +157,87 @@ print("Morphological Profiles size: "+str(columns))
 for i in range(1, emp.get_emp_size()+1):
     fig.add_subplot(rows, columns, i)
     plt.imshow(emp_image[:, :, i-1], cmap='gray', interpolation='bicubic')
+
+plt.show()
+
+
+# building dataset for classification
+dim_x, dim_y, dim_z = emp_image.shape
+dim = dim_x * dim_y
+
+x = np.zeros(shape=(dim, dim_z))
+y = gt
+
+cont = 0
+for i in range(dim_x):
+    for j in range(dim_y):
+        x[cont, :] = emp_image[i, j,:]
+        cont += 1
+
+# Splitting the dataset into the Training set and Test set
+from sklearn.cross_validation import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.75, random_state=0)
+
+# Fitting Kernel SVM to the Training set
+from sklearn.svm import SVC
+classifier = SVC(kernel='rbf', random_state=0)
+classifier.fit(x_train, y_train)
+
+# Predicting the Test set results
+y_pred = classifier.predict(x_test)
+
+# Making the Confusion Matrix
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(y_test, y_pred)
+
+# Visualizing the results
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+
+# Plot non-normalized confusion matrix
+class_names = ['background', 'alfalfa', 'corn-notill', 'corn-min', 'corn',
+               'grass/pasture', 'grass/trees', 'grass/pasture-mowed', 'hay-windrowed', 'oats', 'soybeans-notill', 
+               'soybeans-min', 'soybean-clean', 'wheat', 'woods', 'bldg-grass-tree-drives', 'stone-steel towers']
+
+plt.figure()
+plot_confusion_matrix(cm, classes=class_names,
+                      title='Confusion matrix, without normalization')
+
+# Plot normalized confusion matrix
+plt.figure()
+plot_confusion_matrix(cm, classes=class_names, normalize=True,
+                      title='Normalized confusion matrix')
 
 plt.show()
