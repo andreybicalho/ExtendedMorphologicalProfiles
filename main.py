@@ -123,7 +123,7 @@ gt = np.transpose(groundtruth['pixels'])
 
 # Applying Principal Components Analysis (PCA)
 from sklearn.decomposition import PCA
-number_of_pc = 2
+number_of_pc = 4
 pca = PCA(n_components=number_of_pc)
 pc = pca.fit_transform(pixels)
 
@@ -143,11 +143,6 @@ plt.show()
 pc_images.shape
 emp = ExtendedMorphologicalProfiles()
 emp_image = emp.build_emp(base_image=pc_images)
-# pc_image = np.zeros(shape=(number_of_rows, number_of_columns, number_of_pc))
-# pc_image[:, :, 0] = pc_1_img[:, :]
-# pc_image[:, :, 1] = pc_2_img[:, :]
-# pc_image.shape
-
 
 # Visualizing EMP
 fig = plt.figure(figsize=(15, 15))
