@@ -10,6 +10,17 @@ import itertools
 class ExtendedMorphologicalProfiles:
 
     def build_emp(self, base_image, se_size=4, se_size_increment=2, num_openings_closings=4):
+        """
+            Build the extended morphological profiles for a given set of images.
+
+            Parameters:
+                base_image: 3d matrix, each 'channel' is considered for applying the morphological profile. It is the spectral information part of the EMP.
+                se_size: int, initial size of the structuring element (or kernel). Structuring Element used: disk
+                se_size_increment: int, structuring element increment step
+                num_openings_closings: int, number of openings and closings by reconstruction to perform.
+            Returns: 
+                emp: 3d matrix with both spectral (from the base_image) and spatial information         
+        """
         self.base_image = base_image
         base_image_rows, base_image_columns, base_image_channels = self.base_image.shape
         se_size = se_size
@@ -39,6 +50,17 @@ class ExtendedMorphologicalProfiles:
         return self.emp
 
     def build_morphological_profiles(self, image, se_size=4, se_size_increment=2, num_openings_closings=4):
+        """
+            Build the morphological profiles for a given image.
+
+            Parameters:
+                base_image: 2d matrix, it is the spectral information part of the MP.
+                se_size: int, initial size of the structuring element (or kernel). Structuring Element used: disk
+                se_size_increment: int, structuring element increment step
+                num_openings_closings: int, number of openings and closings by reconstruction to perform.
+            Returns: 
+                emp: 3d matrix with both spectral (from the base_image) and spatial information         
+        """
         x, y = image.shape
 
         cbr = np.zeros(shape=(x, y, num_openings_closings))
@@ -71,11 +93,29 @@ class ExtendedMorphologicalProfiles:
         return mp
 
     def opening_by_reconstruction(self, image, se):
+        """
+            Performs an Opening by Reconstruction.
+
+            Parameters:
+                image: 2D matrix.
+                se: structuring element
+            Returns:
+                2D matrix of the reconstructed image.
+        """
         eroded = erosion(image, se)
         reconstructed = reconstruction(eroded, image)
         return reconstructed
 
     def closing_by_reconstruction(self, image, se):
+        """
+            Performs a Closing by Reconstruction.
+
+            Parameters:
+                image: 2D matrix.
+                se: structuring element
+            Returns:
+                2D matrix of the reconstructed image.
+        """
         obr = self.opening_by_reconstruction(image, se)
 
         obr_inverted = util.invert(obr)
@@ -150,9 +190,9 @@ emp_image = emp.build_emp(base_image=pc_images)
 fig = plt.figure(figsize=(15, 15))
 columns = emp.get_morphological_profile_size()
 rows = emp.get_number_of_base_images()
-print("EMP = "+str(emp_image.shape))
 print("Number of Base Images: "+str(rows))
 print("Morphological Profiles size: "+str(columns))
+print("EMP = "+str(emp_image.shape))
 
 for i in range(1, emp.get_emp_size()+1):
     fig.add_subplot(rows, columns, i)
@@ -201,11 +241,6 @@ def plot_confusion_matrix(cm, classes,
     """
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
-    else:
-        print('Confusion matrix, without normalization')
-
-    print(cm)
 
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
@@ -226,11 +261,12 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 
-# Plot non-normalized confusion matrix
+# indian pines class names
 class_names = ['background', 'alfalfa', 'corn-notill', 'corn-min', 'corn',
                'grass/pasture', 'grass/trees', 'grass/pasture-mowed', 'hay-windrowed', 'oats', 'soybeans-notill', 
                'soybeans-min', 'soybean-clean', 'wheat', 'woods', 'bldg-grass-tree-drives', 'stone-steel towers']
 
+# Plot non-normalized confusion matrix
 plt.figure()
 plot_confusion_matrix(cm, classes=class_names,
                       title='Confusion matrix, without normalization')
@@ -241,3 +277,35 @@ plot_confusion_matrix(cm, classes=class_names, normalize=True,
                       title='Normalized confusion matrix')
 
 plt.show()
+
+
+# Visualizing the thematic map
+indianpines_colors = np.array([[255, 255, 255],
+                               [255, 254, 137], [3,  28,  241], [255, 89,    1], [5,   255, 133], 
+                               [255,   2, 251], [89,  1,  255], [3,   171, 255], [12,  255,   7], 
+                               [172, 175,  84], [160, 78, 158], [101, 173, 255], [60,   91, 112], 
+                               [104, 192,  63], [139, 69,  46], [119, 255, 172], [254, 255,   3]])
+import sklearn.preprocessing
+indianpines_colors = sklearn.preprocessing.minmax_scale(indianpines_colors, feature_range=(0, 1))
+
+gt_thematic_map = np.zeros(shape=(number_of_rows, number_of_columns, 3))
+predicted_thematic_map = np.zeros(shape=(number_of_rows, number_of_columns, 3))
+predicted_dataset = classifier.predict(x)
+
+cont = 0
+for i in range(number_of_rows):
+    for j in range(number_of_columns):
+        gt_thematic_map[i, j, :] = indianpines_colors[gt[cont, 0]]
+        predicted_thematic_map[i, j, :] = indianpines_colors[predicted_dataset[cont]]
+        cont += 1
+
+fig = plt.figure(figsize=(15, 15))
+columns = 2
+rows = 1
+fig.add_subplot(rows, columns, 1)
+plt.imshow(gt_thematic_map)
+fig.add_subplot(rows, columns, 2)
+plt.imshow(predicted_thematic_map)
+
+plt.show()
+
