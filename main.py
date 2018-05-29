@@ -262,18 +262,20 @@ def plot_confusion_matrix(cm, classes,
 
 
 # indian pines class names
-class_names = ['background', 'alfalfa', 'corn-notill', 'corn-min', 'corn',
-               'grass/pasture', 'grass/trees', 'grass/pasture-mowed', 'hay-windrowed', 'oats', 'soybeans-notill', 
-               'soybeans-min', 'soybean-clean', 'wheat', 'woods', 'bldg-grass-tree-drives', 'stone-steel towers']
+indianpines_class_names = ['background', 
+               'alfalfa',           'corn-notill',               'corn-min',               'corn',
+               'grass/pasture',     'grass/trees',    'grass/pasture-mowed',      'hay-windrowed', 
+               'oats',          'soybeans-notill',           'soybeans-min',      'soybean-clean', 
+               'wheat',                   'woods', 'bldg-grass-tree-drives', 'stone-steel towers']
 
 # Plot non-normalized confusion matrix
 plt.figure()
-plot_confusion_matrix(cm, classes=class_names,
+plot_confusion_matrix(cm, classes=indianpines_class_names,
                       title='Confusion matrix, without normalization')
 
 # Plot normalized confusion matrix
 plt.figure()
-plot_confusion_matrix(cm, classes=class_names, normalize=True,
+plot_confusion_matrix(cm, classes=indianpines_class_names, normalize=True,
                       title='Normalized confusion matrix')
 
 plt.show()
