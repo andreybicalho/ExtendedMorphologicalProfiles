@@ -39,6 +39,12 @@ for i in range(number_of_rows):
         gt_thematic_map[i, j, :] = indianpines_colors[gt[cont, 0]]
         cont += 1
 
+indianpines_class_names = ['background',
+                           'alfalfa',           'corn-notill',               'corn-min',               'corn',
+                           'grass/pasture',     'grass/trees',    'grass/pasture-mowed',      'hay-windrowed',
+                           'oats',          'soybeans-notill',           'soybeans-min',      'soybean-clean',
+                           'wheat',                   'woods', 'bldg-grass-tree-drives', 'stone-steel towers']
+
 fig = plt.figure(figsize=(15, 15))
 columns = 2
 rows = 1
@@ -46,8 +52,11 @@ fig.add_subplot(rows, columns, 1)
 plt.imshow(gt_thematic_map)
 fig.add_subplot(rows, columns, 2)
 plt.imshow(rgb_hyperspectral_image)
-plt.show()
 
+import matplotlib.patches as mpatches
+patches = [mpatches.Patch(color=indianpines_colors[i], label=indianpines_class_names[i]) for i in range(len(indianpines_colors))]
+plt.legend(handles=patches, loc=4, borderaxespad=0.)
+plt.show()
 
 # Preprocessing
 # Applying Principal Components Analysis (PCA)
@@ -275,13 +284,6 @@ def plot_confusion_matrix(cm, classes,
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
 
-
-# indian pines class names
-indianpines_class_names = ['background',
-                           'alfalfa',           'corn-notill',               'corn-min',               'corn',
-                           'grass/pasture',     'grass/trees',    'grass/pasture-mowed',      'hay-windrowed',
-                           'oats',          'soybeans-notill',           'soybeans-min',      'soybean-clean',
-                           'wheat',                   'woods', 'bldg-grass-tree-drives', 'stone-steel towers']
 
 # Plot normalized confusion matrix
 plt.figure()
