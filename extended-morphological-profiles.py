@@ -66,6 +66,10 @@ pca = PCA(n_components=number_of_pc)
 pc = pca.fit_transform(pixels)
 
 # Visualizing PCs
+print(
+    f"The accumulated explained variance for the {number_of_pc} principal components is {np.sum(pca.explained_variance_ratio_)}")
+print(f"Individual Explained Variance: {pca.explained_variance_ratio_}")
+
 fig = plt.figure(figsize=(15, 15))
 columns = number_of_pc
 rows = 1
